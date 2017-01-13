@@ -97,6 +97,22 @@ static const felem_bytearray nistp224_curve_params[5] = {
      0x44, 0xd5, 0x81, 0x99, 0x85, 0x00, 0x7e, 0x34}
 };
 
+typedef unsigned __CPROVER_bitvector[500] ubig;
+
+ubig p = (((ubig)1)<<224) - (((ubig)1)<<96) + 1;
+
+ubig horner(felem in) {
+    ubig out = 0;
+    out += in[3];
+    out <<= 56;
+    out += in[2];
+    out <<= 56;
+    out += in[1];
+    out <<= 56;
+    out += in[0];
+    return out;
+}
+
 
 /*
  * Helper functions to convert field elements to/from internal representation
