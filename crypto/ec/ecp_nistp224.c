@@ -97,6 +97,13 @@ static const felem_bytearray nistp224_curve_params[5] = {
      0x44, 0xd5, 0x81, 0x99, 0x85, 0x00, 0x7e, 0x34}
 };
 
+#define __CPROVER_assume_limbs_fit_57bit(in) \
+    __CPROVER_assume(in[0]<(((limb)1)<<57)); \
+    __CPROVER_assume(in[1]<(((limb)1)<<57)); \
+    __CPROVER_assume(in[2]<(((limb)1)<<57)); \
+    __CPROVER_assume(in[3]<(((limb)1)<<57)); \
+
+
 typedef unsigned __CPROVER_bitvector[500] ubig;
 
 ubig p = (((ubig)1)<<224) - (((ubig)1)<<96) + 1;
@@ -185,6 +192,8 @@ static void felem_sum(felem out, const felem in)
 /* Assumes in[i] < 2^57 */
 static void felem_neg(felem out, const felem in)
 {
+    __CPROVER_assume_limbs_fit_57bit(in);
+
     static const limb two58p2 = (((limb) 1) << 58) + (((limb) 1) << 2);
     static const limb two58m2 = (((limb) 1) << 58) - (((limb) 1) << 2);
     static const limb two58m42m2 = (((limb) 1) << 58) -
@@ -195,6 +204,8 @@ static void felem_neg(felem out, const felem in)
     out[1] = two58m42m2 - in[1];
     out[2] = two58m2 - in[2];
     out[3] = two58m2 - in[3];
+
+    assert((horner(in)+horner(out))%p==0);
 }
 
 /* Subtract field elements: out -= in */
