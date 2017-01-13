@@ -331,8 +331,16 @@ static void felem_mul(widefelem out, const felem in1, const felem in2)
  * Reduce seven 128-bit coefficients to four 64-bit coefficients.
  * Requires in[i] < 2^126,
  * ensures out[0] < 2^56, out[1] < 2^56, out[2] < 2^56, out[3] <= 2^56 + 2^16 */
-static void felem_reduce(felem out, const widefelem in)
+void felem_reduce(felem out, const widefelem in)
 {
+    __CPROVER_assume(in[0]<((widelimb)1<<126));
+    __CPROVER_assume(in[1]<((widelimb)1<<126));
+    __CPROVER_assume(in[2]<((widelimb)1<<126));
+    __CPROVER_assume(in[3]<((widelimb)1<<126));
+    __CPROVER_assume(in[4]<((widelimb)1<<126));
+    __CPROVER_assume(in[5]<((widelimb)1<<126));
+    __CPROVER_assume(in[6]<((widelimb)1<<126));
+
     static const widelimb two127p15 = (((widelimb) 1) << 127) +
         (((widelimb) 1) << 15);
     static const widelimb two127m71 = (((widelimb) 1) << 127) -
@@ -393,6 +401,8 @@ static void felem_reduce(felem out, const widefelem in)
      * so out < 2*p
      */
     out[3] = output[3];
+
+    assert(horner(out) < 2*p);
 }
 
 static void felem_square_reduce(felem out, const felem in)
