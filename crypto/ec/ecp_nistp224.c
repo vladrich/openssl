@@ -33,6 +33,8 @@
 
 # include <stdint.h>
 # include <string.h>
+# include <stdio.h>
+
 
 # if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
   /* even with gcc, the typedef won't work for 32-bit platforms */
@@ -96,29 +98,6 @@ static const felem_bytearray nistp224_curve_params[5] = {
      0xdf, 0xe6, 0xcd, 0x43, 0x75, 0xa0, 0x5a, 0x07, 0x47, 0x64,
      0x44, 0xd5, 0x81, 0x99, 0x85, 0x00, 0x7e, 0x34}
 };
-
-#define __CPROVER_assume_limbs_fit_57bit(in) \
-    __CPROVER_assume(in[0]<(((limb)1)<<57)); \
-    __CPROVER_assume(in[1]<(((limb)1)<<57)); \
-    __CPROVER_assume(in[2]<(((limb)1)<<57)); \
-    __CPROVER_assume(in[3]<(((limb)1)<<57)); \
-
-
-typedef unsigned __CPROVER_bitvector[500] ubig;
-
-ubig p = (((ubig)1)<<224) - (((ubig)1)<<96) + 1;
-
-ubig horner(felem in) {
-    ubig out = 0;
-    out += in[3];
-    out <<= 56;
-    out += in[2];
-    out <<= 56;
-    out += in[1];
-    out <<= 56;
-    out += in[0];
-    return out;
-}
 
 
 /*
@@ -192,8 +171,6 @@ static void felem_sum(felem out, const felem in)
 /* Assumes in[i] < 2^57 */
 static void felem_neg(felem out, const felem in)
 {
-    __CPROVER_assume_limbs_fit_57bit(in);
-
     static const limb two58p2 = (((limb) 1) << 58) + (((limb) 1) << 2);
     static const limb two58m2 = (((limb) 1) << 58) - (((limb) 1) << 2);
     static const limb two58m42m2 = (((limb) 1) << 58) -
@@ -204,9 +181,8 @@ static void felem_neg(felem out, const felem in)
     out[1] = two58m42m2 - in[1];
     out[2] = two58m2 - in[2];
     out[3] = two58m2 - in[3];
-
-    assert((horner(in)+horner(out))%p==0);
 }
+
 
 /* Subtract field elements: out -= in */
 /* Assumes in[i] < 2^57 */
@@ -342,16 +318,8 @@ static void felem_mul(widefelem out, const felem in1, const felem in2)
  * Reduce seven 128-bit coefficients to four 64-bit coefficients.
  * Requires in[i] < 2^126,
  * ensures out[0] < 2^56, out[1] < 2^56, out[2] < 2^56, out[3] <= 2^56 + 2^16 */
-void felem_reduce(felem out, const widefelem in)
+static void felem_reduce(felem out, const widefelem in)
 {
-    __CPROVER_assume(in[0]<((widelimb)1<<126));
-    __CPROVER_assume(in[1]<((widelimb)1<<126));
-    __CPROVER_assume(in[2]<((widelimb)1<<126));
-    __CPROVER_assume(in[3]<((widelimb)1<<126));
-    __CPROVER_assume(in[4]<((widelimb)1<<126));
-    __CPROVER_assume(in[5]<((widelimb)1<<126));
-    __CPROVER_assume(in[6]<((widelimb)1<<126));
-
     static const widelimb two127p15 = (((widelimb) 1) << 127) +
         (((widelimb) 1) << 15);
     static const widelimb two127m71 = (((widelimb) 1) << 127) -
@@ -412,8 +380,6 @@ void felem_reduce(felem out, const widefelem in)
      * so out < 2*p
      */
     out[3] = output[3];
-
-    assert(horner(out) < 2*p);
 }
 
 static void felem_square_reduce(felem out, const felem in)
@@ -610,3 +576,7 @@ static void copy_conditional(felem out, const felem in, limb icopy)
     }
 }
 
+
+#ifdef __CPROVER__
+#include "ecp_nistp224_driver.c"
+#endif
