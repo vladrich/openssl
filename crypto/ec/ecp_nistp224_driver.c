@@ -43,7 +43,8 @@ void check_felem_neg(void) {
     __CPROVER_assume_limbs_fit_57bit(in);
     felem out;
     felem_neg(out, in);
-    assert((horner(in)+horner(out))%p==0);
+//    assert((horner(in)+horner(out))%p==0);
+    assert((horner(in)+horner(out))==4*p);
 }
 
 
