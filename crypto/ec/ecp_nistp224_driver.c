@@ -37,6 +37,7 @@ ubig widehorner(widefelem in) {
     __CPROVER_assume(!__CPROVER_invalid_pointer(out));
 */
 
+//----------------------------------------------------------------------
 
 void check_felem_neg(void) {
     felem in;
@@ -47,6 +48,21 @@ void check_felem_neg(void) {
     assert((horner(in)+horner(out))==4*p);
 }
 
+//----------------------------------------------------------------------
+
+void check_felem_diff(void) {
+    felem in;
+    __CPROVER_assume_limbs_fit_57bit(in);
+    felem out;
+    __CPROVER_assume_limbs_fit_57bit(out);
+    ubig out_old = horner(out);
+    ubig in_old = horner(in);
+    felem_diff(out, in);
+//    assert((in_old+horner(out)-out_old)%p==0);
+    assert((in_old+horner(out)-out_old)==4*p);
+}
+
+//----------------------------------------------------------------------
 
 #define WIDEBOUND ((widelimb)1<<3)
 
